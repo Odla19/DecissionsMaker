@@ -2,6 +2,7 @@
 
 import { useDecisionStore } from "@/lib/ahp/store";
 import { calculatePriorities, calculateConsistencyRatio, sliderToMatValue } from "@/lib/ahp/engine";
+import { translations } from "@/lib/ahp/translations";
 import { Button } from "@/components/ui/base";
 import StepIndicator from "@/components/ahp/StepIndicator";
 import { useRouter } from "next/navigation";
@@ -10,7 +11,7 @@ import { motion } from "framer-motion";
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell
 } from 'recharts';
-import { AlertTriangle, CheckCircle, RefreshCcw, Share2, Trophy, Star, Target, Zap, Shield, Wallet, Clock, Heart, Award, Info } from "lucide-react";
+import { AlertTriangle, CheckCircle, RefreshCcw, Share2, Trophy, Star, Target, Zap, Shield, Wallet, Clock, Heart, Award, Info, Send, MessageCircle } from "lucide-react";
 
 const getCriterionIcon = (name: string) => {
     const n = name.toLowerCase();
@@ -30,9 +31,11 @@ export default function ResultsPage() {
         criteriaComparisons,
         alternativesComparisons,
         mission,
-        reset
+        reset,
+        language
     } = useDecisionStore();
     const router = useRouter();
+    const t = translations[language];
 
     const results = useMemo(() => {
         if (criteria.length < 2 || alternatives.length < 2) return null;
@@ -104,13 +107,26 @@ export default function ResultsPage() {
 
     if (!results) return null;
 
+    const shareUrl = "https://decissions-maker.vercel.app";
+    const shareTextEn = t.socialMessage.replace('{goal}', mission).replace('{winner}', results.finalScores[0].name).replace('{score}', results.finalScores[0].score.toString());
+
+    const shareWhatsApp = () => {
+        const url = `https://wa.me/?text=${encodeURIComponent(shareTextEn + " " + shareUrl)}`;
+        window.open(url, '_blank');
+    };
+
+    const shareTelegram = () => {
+        const url = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTextEn)}`;
+        window.open(url, '_blank');
+    };
+
     return (
         <div className="flex flex-col space-y-12">
             <StepIndicator currentStep={4} />
 
             <header className="text-center">
-                <h1 className="text-4xl font-bold mb-4">Your Decision Results</h1>
-                <p className="text-secondary text-lg">Mission: <span className="text-foreground italic">"{mission}"</span></p>
+                <h1 className="text-4xl font-bold mb-4">{t.results}</h1>
+                <p className="text-secondary text-lg">{t.mission}: <span className="text-foreground italic">"{mission}"</span></p>
             </header>
 
             {/* Winner Spotlight Card */}
@@ -125,7 +141,7 @@ export default function ResultsPage() {
                     <div className="inline-flex items-center justify-center p-4 bg-yellow-400/10 rounded-2xl mb-6">
                         <Trophy className="w-12 h-12 text-yellow-500 drop-shadow-sm" />
                     </div>
-                    <p className="text-secondary font-bold uppercase tracking-[0.2em] text-xs mb-2">The Optimal Choice</p>
+                    <p className="text-secondary font-bold uppercase tracking-[0.2em] text-xs mb-2">{t.bestOption}</p>
                     <h2 className="text-5xl font-black text-foreground mb-4 tracking-tight">
                         {results.finalScores[0].name}
                     </h2>
@@ -139,7 +155,7 @@ export default function ResultsPage() {
                     <div className="max-w-md mx-auto p-6 bg-black/5 rounded-3xl border border-black/5 backdrop-blur-md">
                         <h3 className="text-sm font-bold text-foreground flex items-center justify-center gap-2 mb-3">
                             <Info className="w-4 h-4 text-primary" />
-                            Why this option won:
+                            {t.whyWon}
                         </h3>
                         <p className="text-sm text-secondary leading-relaxed">
                             {(() => {
@@ -152,9 +168,38 @@ export default function ResultsPage() {
                                 })).sort((a, b) => b.contribution - a.contribution);
 
                                 const top2 = contributions.slice(0, 2);
+
+                                if (language === 'es') {
+                                    return `${winnerName} emergió como el líder claro principalmente debido a su fuerte desempeño en ${top2[0].name} (${((results.criteriaPriorities.find(c => c.name === top2[0].name)?.weight || 0) * 100).toFixed(0)}% de peso) y ${top2[1].name}.`;
+                                }
                                 return `${winnerName} emerged as the clear leader primarily due to its strong performance in ${top2[0].name} (${((results.criteriaPriorities.find(c => c.name === top2[0].name)?.weight || 0) * 100).toFixed(0)}% weight) and ${top2[1].name}.`;
                             })()}
                         </p>
+                    </div>
+
+                    {/* Social Share Section */}
+                    <div className="mt-8 pt-8 border-t border-black/5">
+                        <p className="text-xs font-bold uppercase tracking-widest text-secondary mb-4">{t.share}</p>
+                        <div className="flex justify-center gap-4">
+                            <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={shareWhatsApp}
+                                className="flex items-center gap-2 px-6 py-3 bg-green-500/10 text-green-600 rounded-2xl border border-green-500/20 backdrop-blur-sm hover:bg-green-500/20 transition-all font-bold text-sm"
+                            >
+                                <MessageCircle className="w-4 h-4" />
+                                WhatsApp
+                            </motion.button>
+                            <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={shareTelegram}
+                                className="flex items-center gap-2 px-6 py-3 bg-blue-500/10 text-blue-600 rounded-2xl border border-blue-500/20 backdrop-blur-sm hover:bg-blue-500/20 transition-all font-bold text-sm"
+                            >
+                                <Send className="w-4 h-4" />
+                                Telegram
+                            </motion.button>
+                        </div>
                     </div>
                 </div>
             </motion.div>
@@ -164,7 +209,7 @@ export default function ResultsPage() {
                 <div className="lg:col-span-2 bg-white/40 backdrop-blur-md rounded-[2rem] border border-white/20 p-8 shadow-glass relative overflow-hidden">
                     <h2 className="text-xl font-semibold mb-8 flex items-center gap-2">
                         <Award className="w-5 h-5 text-primary" />
-                        Complete Ranking
+                        {t.ranking}
                     </h2>
                     <div className="h-[400px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
@@ -204,25 +249,25 @@ export default function ResultsPage() {
                             ) : (
                                 <AlertTriangle className="text-orange-600 w-6 h-6" />
                             )}
-                            <h3 className="font-bold text-lg">Consistency Advisor</h3>
+                            <h3 className="font-bold text-lg">{t.consistency}</h3>
                         </div>
                         <p className="text-sm mb-4">
                             {results.isConsistent
-                                ? "Your judgments are highly consistent. The results are mathematically reliable."
-                                : "Some of your pairwise comparisons are inconsistent. You might want to review them for better accuracy."}
+                                ? t.consistencyAcceptable
+                                : t.consistencyWarning}
                         </p>
 
                         <div className="text-[10px] space-y-1 pt-4 border-t border-black/5">
-                            <p className="font-bold uppercase tracking-widest text-secondary/60 mb-2">Detailed Consistency Ratios</p>
+                            <p className="font-bold uppercase tracking-widest text-secondary/60 mb-2">{t.detailedCR}</p>
                             <div className="flex justify-between items-center">
-                                <span>Overall Criteria</span>
+                                <span>{t.overallCriteria}</span>
                                 <span className={results.criteriaCR.cr < 0.1 ? "text-green-600 font-medium" : "text-orange-600 font-medium"}>
                                     {results.criteriaCR.cr.toFixed(3)}
                                 </span>
                             </div>
                             {results.allAltCRs.map((cr, i) => (
                                 <div key={i} className="flex justify-between items-center">
-                                    <span className="truncate max-w-[120px]">{criteria[i]?.name || 'Criterion'} Comparisons</span>
+                                    <span className="truncate max-w-[120px]">{criteria[i]?.name || 'Criterion'} {language === 'es' ? 'Comparaciones' : 'Comparisons'}</span>
                                     <span className={cr.cr < 0.1 ? "text-green-600 font-medium" : "text-orange-600 font-medium"}>
                                         {cr.cr.toFixed(3)}
                                     </span>
@@ -232,7 +277,7 @@ export default function ResultsPage() {
                     </div>
 
                     <div className="bg-white/40 backdrop-blur-md p-6 rounded-apple border border-white/20 shadow-glass">
-                        <h3 className="font-semibold mb-4">Criteria Weighting</h3>
+                        <h3 className="font-semibold mb-4">{t.criteriaWeight}</h3>
                         <div className="space-y-4">
                             {results.criteriaPriorities.map((c, i) => (
                                 <div key={i} className="group flex flex-col gap-1">
@@ -259,11 +304,11 @@ export default function ResultsPage() {
             <div className="flex justify-center gap-4 py-12">
                 <Button variant="outline" onClick={() => { reset(); router.push("/"); }}>
                     <RefreshCcw className="mr-2 w-4 h-4" />
-                    Start New Decision
+                    {t.start}
                 </Button>
                 <Button onClick={() => window.print()}>
                     <Share2 className="mr-2 w-4 h-4" />
-                    Export Results
+                    {t.export}
                 </Button>
             </div>
         </div >

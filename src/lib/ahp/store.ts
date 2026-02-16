@@ -18,12 +18,14 @@ export interface Comparison {
 }
 
 interface DecisionState {
+    language: 'en' | 'es';
     mission: string;
     criteria: Criterion[];
     alternatives: Alternative[];
     criteriaComparisons: Comparison[];
     alternativesComparisons: Record<string, Comparison[]>; // criterionId -> comparisons
 
+    setLanguage: (lang: 'en' | 'es') => void;
     setMission: (mission: string) => void;
     setCriteria: (criteria: Criterion[]) => void;
     setAlternatives: (alternatives: Alternative[]) => void;
@@ -35,12 +37,14 @@ interface DecisionState {
 export const useDecisionStore = create<DecisionState>()(
     persist(
         (set) => ({
+            language: 'en',
             mission: '',
             criteria: [],
             alternatives: [],
             criteriaComparisons: [],
             alternativesComparisons: {},
 
+            setLanguage: (language) => set({ language }),
             setMission: (mission) => set({ mission }),
             setCriteria: (criteria) => set({ criteria }),
             setAlternatives: (alternatives) => set({ alternatives }),

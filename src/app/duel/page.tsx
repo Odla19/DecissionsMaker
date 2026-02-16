@@ -1,6 +1,7 @@
 "use client";
 
 import { useDecisionStore } from "@/lib/ahp/store";
+import { translations } from "@/lib/ahp/translations";
 import { Button } from "@/components/ui/base";
 import StepIndicator from "@/components/ahp/StepIndicator";
 import DuelSlider from "@/components/ahp/DuelSlider";
@@ -15,9 +16,11 @@ export default function DuelPage() {
         updateCriteriaComparison,
         updateAlternativeComparison,
         criteriaComparisons,
-        alternativesComparisons
+        alternativesComparisons,
+        language
     } = useDecisionStore();
     const router = useRouter();
+    const t = translations[language];
 
     // Generate all needed comparisons
     const tasks = useMemo(() => {
@@ -32,7 +35,7 @@ export default function DuelPage() {
                     id2: criteria[j].id,
                     label1: criteria[i].name,
                     label2: criteria[j].name,
-                    context: 'Criteria Importance'
+                    context: language === 'es' ? 'Importancia de Criterios' : 'Criteria Importance'
                 });
             }
         }
@@ -48,13 +51,13 @@ export default function DuelPage() {
                         id2: alternatives[j].id,
                         label1: alternatives[i].name,
                         label2: alternatives[j].name,
-                        context: `Performance on: ${criterion.name}`
+                        context: language === 'es' ? `Desempeño en: ${criterion.name}` : `Performance on: ${criterion.name}`
                     });
                 }
             }
         }
         return list;
-    }, [criteria, alternatives]);
+    }, [criteria, alternatives, language]);
 
     const [currentIndex, setCurrentIndex] = useState(0);
     const currentTask = tasks[currentIndex];
@@ -103,9 +106,9 @@ export default function DuelPage() {
                 <div className="flex justify-between items-end mb-2">
                     <div>
                         <span className="text-secondary text-sm font-medium uppercase tracking-wider">{currentTask.context}</span>
-                        <h1 className="text-2xl font-bold">Pairwise Comparison</h1>
+                        <h1 className="text-2xl font-bold">{t.comparisons}</h1>
                     </div>
-                    <span className="text-secondary text-sm">Duel {currentIndex + 1} of {tasks.length}</span>
+                    <span className="text-secondary text-sm">{t.duelOf.replace('{current}', (currentIndex + 1).toString()).replace('{total}', tasks.length.toString())}</span>
                 </div>
                 <div className="w-full h-2 bg-accent rounded-full overflow-hidden shadow-inner">
                     <motion.div
@@ -124,11 +127,11 @@ export default function DuelPage() {
                             exit={{ opacity: 0, scale: 1.1 }}
                             className="text-xs font-medium text-primary/60 italic"
                         >
-                            {progress < 25 && "Getting started! Let's define your values..."}
-                            {progress >= 25 && progress < 50 && "You're doing great! Diving deeper..."}
-                            {progress >= 50 && progress < 75 && "Halfway there! Keep those judgments coming..."}
-                            {progress >= 75 && progress < 100 && "Almost there! Analyzing your preferences..."}
-                            {progress >= 100 && "Perfect! Ready to see your results?"}
+                            {progress < 25 && t.encouragement[0]}
+                            {progress >= 25 && progress < 50 && t.encouragement[1]}
+                            {progress >= 50 && progress < 75 && t.encouragement[2]}
+                            {progress >= 75 && progress < 100 && t.encouragement[3]}
+                            {progress >= 100 && t.encouragement[4]}
                         </motion.p>
                     </AnimatePresence>
                 </div>
@@ -153,17 +156,17 @@ export default function DuelPage() {
                     <div className="mt-12 flex gap-4 w-full max-w-md">
                         <Button variant="outline" className="flex-1" onClick={handleBack}>
                             <ArrowLeft className="mr-2 w-4 h-4" />
-                            Previous
+                            {t.back}
                         </Button>
                         <Button className="flex-1" onClick={handleNext}>
                             {currentIndex === tasks.length - 1 ? (
                                 <>
-                                    See Results
+                                    {t.results}
                                     <CheckCircle2 className="ml-2 w-4 h-4" />
                                 </>
                             ) : (
                                 <>
-                                    Next Duel
+                                    {t.next}
                                     <ArrowRight className="ml-2 w-4 h-4" />
                                 </>
                             )}
@@ -173,8 +176,17 @@ export default function DuelPage() {
             </AnimatePresence>
 
             <div className="mt-8 text-center text-secondary text-sm">
-                <p>A score of 0 means both items are equally important.</p>
-                <p>Scores move in steps: 2 (Moderate), 4 (Strong), 6 (Very Strong), 8 (Extreme).</p>
+                {language === 'es' ? (
+                    <>
+                        <p>Una puntuación de 0 significa que ambos elementos son igualmente importantes.</p>
+                        <p>Las puntuaciones se mueven en pasos: 2 (Moderado), 4 (Fuerte), 6 (Muy Fuerte), 8 (Extremo).</p>
+                    </>
+                ) : (
+                    <>
+                        <p>A score of 0 means both items are equally important.</p>
+                        <p>Scores move in steps: 2 (Moderate), 4 (Strong), 6 (Very Strong), 8 (Extreme).</p>
+                    </>
+                )}
             </div>
         </div>
     );
