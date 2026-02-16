@@ -17,6 +17,15 @@ export interface Comparison {
     value: number; // slider value (-8 to 8)
 }
 
+interface DecisionRecord {
+    id: string;
+    mission: string;
+    winner: string;
+    score: number;
+    date: string;
+    criteriaWeights: { name: string, weight: number }[];
+}
+
 interface DecisionState {
     language: 'en' | 'es';
     mission: string;
@@ -24,6 +33,11 @@ interface DecisionState {
     alternatives: Alternative[];
     criteriaComparisons: Comparison[];
     alternativesComparisons: Record<string, Comparison[]>; // criterionId -> comparisons
+    completedDecisions: DecisionRecord[];
+    isZen: boolean;
+    comparisonMode: 'precision' | 'express';
+    alternativeRatings: Record<string, Record<string, number>>; // criterionId -> alternativeId -> rating
+    isPro: boolean;
 
     setLanguage: (lang: 'en' | 'es') => void;
     setMission: (mission: string) => void;
@@ -31,6 +45,11 @@ interface DecisionState {
     setAlternatives: (alternatives: Alternative[]) => void;
     updateCriteriaComparison: (id1: string, id2: string, value: number) => void;
     updateAlternativeComparison: (criterionId: string, id1: string, id2: string, value: number) => void;
+    saveDecision: (record: Omit<DecisionRecord, 'id' | 'date'>) => void;
+    setIsZen: (isZen: boolean) => void;
+    setComparisonMode: (mode: 'precision' | 'express') => void;
+    updateAlternativeRating: (criterionId: string, alternativeId: string, rating: number) => void;
+    setIsPro: (isPro: boolean) => void;
     reset: () => void;
 }
 
@@ -43,11 +62,28 @@ export const useDecisionStore = create<DecisionState>()(
             alternatives: [],
             criteriaComparisons: [],
             alternativesComparisons: {},
+            completedDecisions: [],
+            isZen: false,
+            comparisonMode: 'precision',
+            alternativeRatings: {},
+            isPro: false,
 
             setLanguage: (language) => set({ language }),
             setMission: (mission) => set({ mission }),
             setCriteria: (criteria) => set({ criteria }),
             setAlternatives: (alternatives) => set({ alternatives }),
+            setIsZen: (isZen) => set({ isZen }),
+            setComparisonMode: (comparisonMode) => set({ comparisonMode }),
+            updateAlternativeRating: (criterionId, alternativeId, rating) => set((state) => ({
+                alternativeRatings: {
+                    ...state.alternativeRatings,
+                    [criterionId]: {
+                        ...(state.alternativeRatings[criterionId] || {}),
+                        [alternativeId]: rating
+                    }
+                }
+            })),
+            setIsPro: (isPro) => set({ isPro }),
 
             updateCriteriaComparison: (id1, id2, value) => set((state) => {
                 const index = state.criteriaComparisons.findIndex(
@@ -81,12 +117,26 @@ export const useDecisionStore = create<DecisionState>()(
                 };
             }),
 
+            saveDecision: (record) => set((state) => ({
+                completedDecisions: [
+                    ...state.completedDecisions,
+                    {
+                        ...record,
+                        id: crypto.randomUUID(),
+                        date: new Date().toISOString()
+                    }
+                ]
+            })),
+
             reset: () => set({
                 mission: '',
                 criteria: [],
                 alternatives: [],
                 criteriaComparisons: [],
-                alternativesComparisons: {}
+                alternativesComparisons: {},
+                alternativeRatings: {},
+                isZen: false,
+                comparisonMode: 'precision'
             }),
         }),
         {

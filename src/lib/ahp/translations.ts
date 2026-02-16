@@ -50,7 +50,29 @@ export const translations = {
         backMission: "Back to Mission",
         setupWarning: "Add at least 2 criteria and 2 alternatives to proceed.",
         footer: "DecisionsMaker © 2026 by Aldo Salazar. Built with the Science of AHP.",
-        shareDecision: "Share Decision"
+        shareDecision: "Share Decision",
+        useTemplate: "Use Template",
+        selectTemplate: "Select a Template",
+        expressMode: "Express Mode",
+        precisionMode: "Precision Mode",
+        upgradePro: "Upgrade to PRO",
+        proFeature: "PRO Feature",
+        proFeatureDesc: "This feature is available for SOPESA PRO users.",
+        sensitivityAnalysis: "Sensitivity Analysis",
+        sensitivityDesc: "Adjust criteria weights to see how the results change in real-time.",
+        donate: "Support Project",
+        starRating: "Star Rating",
+        expressDesc: "Rate alternatives from 1 to 5 stars per criterion.",
+        reportBug: "Report a bug / Send feedback",
+        quickStart: "Quick Start Templates",
+        authorCredit: "By Aldo Salazar",
+        proBenefits: {
+            title: "Unlock full scientific potential",
+            ai: "AI Decision Assistant",
+            google: "Google Search Integration",
+            sensitivity: "Advanced Sensitivity Analysis",
+            pdf: "Premium PDF Export"
+        }
     },
     es: {
         title: "SOPESA",
@@ -103,6 +125,28 @@ export const translations = {
         backMission: "Volver a la Misión",
         setupWarning: "Añade al menos 2 criterios y 2 alternativas para continuar.",
         footer: "SOPESA © 2026 por Aldo Salazar. Construido con la Ciencia de AHP.",
-        shareDecision: "Compartir Decisión"
+        shareDecision: "Compartir Decisión",
+        useTemplate: "Usar Plantilla",
+        selectTemplate: "Selecciona una Plantilla",
+        expressMode: "Modo Express",
+        precisionMode: "Modo de Precisión",
+        upgradePro: "SOPESA PRO",
+        proFeature: "Función PRO",
+        proFeatureDesc: "Esta función está disponible para usuarios de SOPESA PRO.",
+        sensitivityAnalysis: "Análisis de Sensibilidad",
+        sensitivityDesc: "Ajusta los pesos de los criterios para ver cómo cambian los resultados en tiempo real.",
+        donate: "Apoyar Proyecto",
+        starRating: "Calificación por Estrellas",
+        expressDesc: "Califica las alternativas de 1 a 5 estrellas por criterio.",
+        reportBug: "Reportar un error / Enviar Feedback",
+        quickStart: "Plantillas de Inicio Rápido",
+        authorCredit: "Por Aldo Salazar",
+        proBenefits: {
+            title: "Desbloquea todo el potencial científico",
+            ai: "Asistente de Decisiones IA",
+            google: "Integración con Búsqueda de Google",
+            sensitivity: "Análisis de Sensibilidad Avanzado",
+            pdf: "Exportación PDF Premium"
+        }
     }
 };

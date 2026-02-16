@@ -11,7 +11,9 @@ export function calculatePriorities(matrix: number[][]): number[] {
     // Sum columns
     for (let j = 0; j < n; j++) {
         for (let i = 0; i < n; i++) {
-            colSums[j] += matrix[i][j];
+            // Ensure value is a valid number, default to 1 if NaN or null
+            const val = (matrix[i][j] && !isNaN(matrix[i][j])) ? matrix[i][j] : 1;
+            colSums[j] += val;
         }
     }
 
@@ -20,7 +22,10 @@ export function calculatePriorities(matrix: number[][]): number[] {
     for (let i = 0; i < n; i++) {
         let rowSumOfNormalized = 0;
         for (let j = 0; j < n; j++) {
-            rowSumOfNormalized += matrix[i][j] / colSums[j];
+            // Prevent division by zero if colSums[j] is 0
+            const sum = colSums[j] || 1;
+            const val = (matrix[i][j] && !isNaN(matrix[i][j])) ? matrix[i][j] : 1;
+            rowSumOfNormalized += val / sum;
         }
         priorities[i] = rowSumOfNormalized / n;
     }
@@ -38,17 +43,23 @@ export function calculateConsistencyRatio(matrix: number[][], priorities: number
 
     // 1. Calculate weighted sum vector (Ax)
     const weightedSum = matrix.map((row) =>
-        row.reduce((sum, val, j) => sum + val * priorities[j], 0)
+        row.reduce((sum, val, j) => {
+            const safeVal = (val && !isNaN(val)) ? val : 1;
+            return sum + safeVal * (priorities[j] || 0);
+        }, 0)
     );
 
     // 2. Estimate lambda_max (average of (Ax)_i / x_i)
-    const lambdaMax = weightedSum.reduce((sum, val, i) => sum + val / priorities[i], 0) / n;
+    const lambdaMax = weightedSum.reduce((sum, val, i) => {
+        const priority = priorities[i] || (1 / n); // Prevent division by zero
+        return sum + val / priority;
+    }, 0) / n;
 
     // 3. Consistency Index (CI)
     const ci = (lambdaMax - n) / (n - 1);
 
     // 4. Consistency Ratio (CR)
-    const ri = RI_VALUES[n - 1]; // Index adjustment for 1-based n
+    const ri = RI_VALUES[n - 1] || 1; // Index adjustment for 1-based n
     const cr = ri === 0 ? 0 : ci / ri;
 
     return {
@@ -61,12 +72,9 @@ export function calculateConsistencyRatio(matrix: number[][], priorities: number
 
 /**
  * Converts a slider value (1/9 to 9) to the actual matrix value.
- * Slider range typically -8 to 8 or something similar.
- * 0 -> 1
- * 8 -> 9
- * -8 -> 1/9
  */
 export function sliderToMatValue(value: number): number {
+    if (isNaN(value) || value === null) return 1;
     if (value === 0) return 1;
     if (value > 0) return value + 1;
     return 1 / (Math.abs(value) + 1);

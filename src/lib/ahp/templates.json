@@ -1,0 +1,143 @@
+[
+    {
+        "id": "buying-a-car",
+        "name": {
+            "en": "Buying a Car",
+            "es": "Comprar un auto"
+        },
+        "mission": {
+            "en": "Which car should I buy?",
+            "es": "¿Qué auto debería comprar?"
+        },
+        "criteria": [
+            {
+                "en": "Price",
+                "es": "Precio"
+            },
+            {
+                "en": "Fuel Consumption",
+                "es": "Consumo de Combustible"
+            },
+            {
+                "en": "Safety",
+                "es": "Seguridad"
+            },
+            {
+                "en": "Style",
+                "es": "Estilo"
+            },
+            {
+                "en": "Performance",
+                "es": "Desempeño"
+            }
+        ],
+        "alternatives": [
+            {
+                "en": "SUV",
+                "es": "SUV"
+            },
+            {
+                "en": "Sedan",
+                "es": "Sedán"
+            },
+            {
+                "en": "Electric Hatchback",
+                "es": "Hatchback Eléctrico"
+            }
+        ]
+    },
+    {
+        "id": "choosing-a-job",
+        "name": {
+            "en": "Choosing a Job",
+            "es": "Elegir un trabajo"
+        },
+        "mission": {
+            "en": "Which job offer is better?",
+            "es": "¿Qué oferta de trabajo es mejor?"
+        },
+        "criteria": [
+            {
+                "en": "Salary",
+                "es": "Salario"
+            },
+            {
+                "en": "Culture",
+                "es": "Cultura"
+            },
+            {
+                "en": "Remote Work",
+                "es": "Teletrabajo"
+            },
+            {
+                "en": "Growth Potential",
+                "es": "Potencial de Crecimiento"
+            },
+            {
+                "en": "Benefits",
+                "es": "Beneficios"
+            }
+        ],
+        "alternatives": [
+            {
+                "en": "Startup A",
+                "es": "Startup A"
+            },
+            {
+                "en": "Tech Giant B",
+                "es": "Gigante Tecnológico B"
+            },
+            {
+                "en": "Freelance",
+                "es": "Freelance"
+            }
+        ]
+    },
+    {
+        "id": "picking-a-vacation",
+        "name": {
+            "en": "Picking a Vacation",
+            "es": "Elegir vacaciones"
+        },
+        "mission": {
+            "en": "Where should I go for vacation?",
+            "es": "¿A dónde debería ir de vacaciones?"
+        },
+        "criteria": [
+            {
+                "en": "Climate",
+                "es": "Clima"
+            },
+            {
+                "en": "Cost",
+                "es": "Costo"
+            },
+            {
+                "en": "Activities",
+                "es": "Actividades"
+            },
+            {
+                "en": "Travel Time",
+                "es": "Tiempo de Viaje"
+            },
+            {
+                "en": "Cuisine",
+                "es": "Gastronomía"
+            }
+        ],
+        "alternatives": [
+            {
+                "en": "Tropical Beach",
+                "es": "Playa Tropical"
+            },
+            {
+                "en": "Ski Resort",
+                "es": "Resort de Esquí"
+            },
+            {
+                "en": "Historic City",
+                "es": "Ciudad Histórica"
+            }
+        ]
+    }
+]

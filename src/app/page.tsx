@@ -6,7 +6,7 @@ import { Button, Input } from "@/components/ui/base";
 import StepIndicator from "@/components/ahp/StepIndicator";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, History } from "lucide-react";
 
 export default function MissionPage() {
   const { mission, setMission, language } = useDecisionStore();
@@ -44,7 +44,7 @@ export default function MissionPage() {
           autoFocus
         />
 
-        <div className="flex justify-center">
+        <div className="flex justify-center gap-4">
           <Button
             size="lg"
             disabled={!mission.trim()}
@@ -53,6 +53,16 @@ export default function MissionPage() {
           >
             {t.startDefining}
             <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          </Button>
+
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => router.push("/history")}
+            className="group"
+          >
+            <History className="mr-2 w-4 h-4 group-hover:rotate-[-10deg] transition-transform" />
+            {language === 'es' ? 'Historial' : 'History'}
           </Button>
         </div>
       </div>

@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/base";
 import StepIndicator from "@/components/ahp/StepIndicator";
 import DuelSlider from "@/components/ahp/DuelSlider";
 import { useRouter } from "next/navigation";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Zap, EyeOff, Star } from "lucide-react";
 
 export default function DuelPage() {
     const {
@@ -17,10 +17,25 @@ export default function DuelPage() {
         updateAlternativeComparison,
         criteriaComparisons,
         alternativesComparisons,
-        language
+        language,
+        isZen,
+        setIsZen,
+        comparisonMode,
+        updateAlternativeRating,
+        alternativeRatings
     } = useDecisionStore();
     const router = useRouter();
     const t = translations[language];
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && isZen) {
+                setIsZen(false);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isZen, setIsZen]);
 
     // Generate all needed comparisons
     const tasks = useMemo(() => {
@@ -40,24 +55,39 @@ export default function DuelPage() {
             }
         }
 
-        // 2. Alternatives comparisons for each criterion
-        for (const criterion of criteria) {
-            for (let i = 0; i < alternatives.length; i++) {
-                for (let j = i + 1; j < alternatives.length; j++) {
+        // 2. Alternatives: Comparisons (Precision) or Ratings (Express)
+        if (comparisonMode === 'precision') {
+            for (const criterion of criteria) {
+                for (let i = 0; i < alternatives.length; i++) {
+                    for (let j = i + 1; j < alternatives.length; j++) {
+                        list.push({
+                            type: 'alternatives',
+                            criterionId: criterion.id,
+                            id1: alternatives[i].id,
+                            id2: alternatives[j].id,
+                            label1: alternatives[i].name,
+                            label2: alternatives[j].name,
+                            context: language === 'es' ? `Desempeño en: ${criterion.name}` : `Performance on: ${criterion.name}`
+                        });
+                    }
+                }
+            }
+        } else {
+            // Express mode: 1 rating per alternative per criterion
+            for (const criterion of criteria) {
+                for (const alt of alternatives) {
                     list.push({
-                        type: 'alternatives',
+                        type: 'rating',
                         criterionId: criterion.id,
-                        id1: alternatives[i].id,
-                        id2: alternatives[j].id,
-                        label1: alternatives[i].name,
-                        label2: alternatives[j].name,
-                        context: language === 'es' ? `Desempeño en: ${criterion.name}` : `Performance on: ${criterion.name}`
+                        alternativeId: alt.id,
+                        label: alt.name,
+                        context: language === 'es' ? `Calificar ${alt.name} en: ${criterion.name}` : `Rate ${alt.name} on: ${criterion.name}`
                     });
                 }
             }
         }
         return list;
-    }, [criteria, alternatives, language]);
+    }, [criteria, alternatives, language, comparisonMode]);
 
     const [currentIndex, setCurrentIndex] = useState(0);
     const currentTask = tasks[currentIndex];
@@ -65,16 +95,19 @@ export default function DuelPage() {
     const handleValueChange = (val: number) => {
         if (currentTask.type === 'criteria') {
             updateCriteriaComparison(currentTask.id1, currentTask.id2, val);
-        } else {
+        } else if (currentTask.type === 'alternatives') {
             updateAlternativeComparison(currentTask.criterionId, currentTask.id1, currentTask.id2, val);
         }
     };
 
     const getCurrentValue = () => {
+        if (!currentTask) return 0;
         if (currentTask.type === 'criteria') {
             return criteriaComparisons.find(c => c.id1 === currentTask.id1 && c.id2 === currentTask.id2)?.value || 0;
-        } else {
+        } else if (currentTask.type === 'alternatives') {
             return alternativesComparisons[currentTask.criterionId]?.find(c => c.id1 === currentTask.id1 && c.id2 === currentTask.id2)?.value || 0;
+        } else {
+            return alternativeRatings[currentTask.criterionId]?.[currentTask.alternativeId] || 0;
         }
     };
 
@@ -99,43 +132,70 @@ export default function DuelPage() {
     const progress = ((currentIndex + 1) / tasks.length) * 100;
 
     return (
-        <div className="flex flex-col min-h-[60vh]">
-            <StepIndicator currentStep={3} />
-
-            <div className="mb-8">
-                <div className="flex justify-between items-end mb-2">
-                    <div>
-                        <span className="text-secondary text-sm font-medium uppercase tracking-wider">{currentTask.context}</span>
-                        <h1 className="text-2xl font-bold">{t.comparisons}</h1>
-                    </div>
-                    <span className="text-secondary text-sm">{t.duelOf.replace('{current}', (currentIndex + 1).toString()).replace('{total}', tasks.length.toString())}</span>
-                </div>
-                <div className="w-full h-2 bg-accent rounded-full overflow-hidden shadow-inner">
+        <div className="flex flex-col min-h-[60vh] relative">
+            <div className={`absolute top-0 right-0 z-50 transition-all duration-500 ${isZen ? 'translate-y-2 -translate-x-2' : ''}`}>
+                <Button
+                    variant={isZen ? "primary" : "ghost"}
+                    size="sm"
+                    onClick={() => setIsZen(!isZen)}
+                    className={`${isZen ? 'shadow-lg' : 'text-secondary hover:text-primary'} transition-all gap-2 rounded-full px-4`}
+                >
                     <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${progress}%` }}
-                        transition={{ type: "spring", stiffness: 50, damping: 20 }}
-                        className="h-full bg-gradient-to-r from-primary/80 to-primary shadow-[0_0_10px_rgba(0,113,227,0.3)]"
-                    />
-                </div>
-                <div className="mt-2 text-center">
-                    <AnimatePresence mode="wait">
-                        <motion.p
-                            key={currentIndex}
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 1.1 }}
-                            className="text-xs font-medium text-primary/60 italic"
-                        >
-                            {progress < 25 && t.encouragement[0]}
-                            {progress >= 25 && progress < 50 && t.encouragement[1]}
-                            {progress >= 50 && progress < 75 && t.encouragement[2]}
-                            {progress >= 75 && progress < 100 && t.encouragement[3]}
-                            {progress >= 100 && t.encouragement[4]}
-                        </motion.p>
-                    </AnimatePresence>
-                </div>
+                        animate={{ rotate: isZen ? 0 : 0 }}
+                        transition={{ type: "spring", stiffness: 260, damping: 20 }}
+                    >
+                        {isZen ? <EyeOff className="w-4 h-4" /> : <Zap className="w-4 h-4" />}
+                    </motion.div>
+                    {isZen ? (language === 'es' ? 'Salir Zen (Esc)' : 'Exit Zen (Esc)') : 'Zen Mode'}
+                </Button>
             </div>
+
+            <AnimatePresence>
+                {!isZen && (
+                    <motion.div
+                        initial={{ opacity: 1, y: 0 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                    >
+                        <StepIndicator currentStep={3} />
+
+                        <div className="mb-8">
+                            <div className="flex justify-between items-end mb-2">
+                                <div>
+                                    <span className="text-secondary text-sm font-medium uppercase tracking-wider">{currentTask.context}</span>
+                                    <h1 className="text-2xl font-bold">{t.comparisons}</h1>
+                                </div>
+                                <span className="text-secondary text-sm">{t.duelOf.replace('{current}', (currentIndex + 1).toString()).replace('{total}', tasks.length.toString())}</span>
+                            </div>
+                            <div className="w-full h-2 bg-accent rounded-full overflow-hidden shadow-inner">
+                                <motion.div
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${progress}%` }}
+                                    transition={{ type: "spring", stiffness: 50, damping: 20 }}
+                                    className="h-full bg-gradient-to-r from-primary/80 to-primary shadow-[0_0_10px_rgba(0,113,227,0.3)]"
+                                />
+                            </div>
+                            <div className="mt-2 text-center">
+                                <AnimatePresence mode="wait">
+                                    <motion.p
+                                        key={currentIndex}
+                                        initial={{ opacity: 0, scale: 0.9 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 1.1 }}
+                                        className="text-xs font-medium text-primary/60 italic"
+                                    >
+                                        {progress < 25 && t.encouragement[0]}
+                                        {progress >= 25 && progress < 50 && t.encouragement[1]}
+                                        {progress >= 50 && progress < 75 && t.encouragement[2]}
+                                        {progress >= 75 && progress < 100 && t.encouragement[3]}
+                                        {progress >= 100 && t.encouragement[4]}
+                                    </motion.p>
+                                </AnimatePresence>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             <AnimatePresence mode="wait">
                 <motion.div
@@ -146,12 +206,35 @@ export default function DuelPage() {
                     transition={{ duration: 0.3 }}
                     className="flex-1 flex flex-col items-center justify-center bg-white rounded-apple border border-border/50 p-8 lg:p-12 apple-shadow"
                 >
-                    <DuelSlider
-                        leftLabel={currentTask.label1}
-                        rightLabel={currentTask.label2}
-                        value={getCurrentValue()}
-                        onChange={handleValueChange}
-                    />
+                    {currentTask.type === 'rating' ? (
+                        <div className="space-y-8 text-center w-full max-w-lg">
+                            <h2 className="text-3xl font-bold">{currentTask.label}</h2>
+                            <p className="text-secondary">{t.expressDesc}</p>
+                            <div className="flex justify-center gap-4">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                    <motion.button
+                                        key={star}
+                                        whileHover={{ scale: 1.2 }}
+                                        whileTap={{ scale: 0.9 }}
+                                        onClick={() => updateAlternativeRating(currentTask.criterionId, currentTask.alternativeId, star)}
+                                        className={`p-2 transition-colors ${getCurrentValue() >= star ? 'text-yellow-500' : 'text-gray-300'}`}
+                                    >
+                                        <Star className={`w-12 h-12 ${getCurrentValue() >= star ? 'fill-yellow-500' : 'fill-transparent'}`} />
+                                    </motion.button>
+                                ))}
+                            </div>
+                            <div className="text-sm font-bold text-primary bg-primary/5 py-2 px-4 rounded-full inline-block">
+                                {getCurrentValue() > 0 ? `${getCurrentValue()} ${language === 'es' ? 'Estrellas' : 'Stars'}` : t.starRating}
+                            </div>
+                        </div>
+                    ) : (
+                        <DuelSlider
+                            leftLabel={currentTask.label1}
+                            rightLabel={currentTask.label2}
+                            value={getCurrentValue()}
+                            onChange={handleValueChange}
+                        />
+                    )}
 
                     <div className="mt-12 flex gap-4 w-full max-w-md">
                         <Button variant="outline" className="flex-1" onClick={handleBack}>

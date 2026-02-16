@@ -60,7 +60,13 @@ export default function DuelSlider({ leftLabel, rightLabel, value, onChange }: D
                     max="8"
                     step="2" // Saaty scale usually uses 1, 3, 5, 7, 9
                     value={value}
-                    onChange={(e) => onChange(parseInt(e.target.value))}
+                    onChange={(e) => {
+                        const newVal = parseInt(e.target.value);
+                        if (typeof window !== 'undefined' && window.navigator && window.navigator.vibrate) {
+                            window.navigator.vibrate([5]);
+                        }
+                        onChange(newVal);
+                    }}
                     className="w-full h-2 bg-accent rounded-lg appearance-none cursor-pointer accent-primary"
                 />
                 <div className="flex justify-between mt-2 text-[10px] text-secondary uppercase tracking-widest px-1">

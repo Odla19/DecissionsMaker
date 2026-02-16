@@ -12,7 +12,9 @@ import confetti from "canvas-confetti";
 import {
     BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell
 } from 'recharts';
-import { AlertTriangle, CheckCircle, RefreshCcw, Share2, Trophy, Star, Target, Zap, Shield, Wallet, Clock, Heart, Award, Info, Send, MessageCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle, RefreshCcw, Share2, Trophy, Star, Target, Zap, Shield, Wallet, Clock, Heart, Award, Info, Send, MessageCircle, Sliders } from "lucide-react";
+import ProFeatureGuard from "@/components/ui/ProFeatureGuard";
+import { useState, useCallback } from "react";
 
 const getCriterionIcon = (name: string) => {
     const n = name.toLowerCase();
@@ -33,10 +35,16 @@ export default function ResultsPage() {
         alternativesComparisons,
         mission,
         reset,
-        language
+        language,
+        saveDecision,
+        comparisonMode,
+        alternativeRatings
     } = useDecisionStore();
     const router = useRouter();
     const t = translations[language];
+
+    // local state for sensitivity analysis
+    const [adjustedWeights, setAdjustedWeights] = useState<number[] | null>(null);
 
     const results = useMemo(() => {
         if (criteria.length < 2 || alternatives.length < 2) return null;
@@ -63,20 +71,39 @@ export default function ResultsPage() {
         const allAltCRs: any[] = [];
 
         criteria.forEach((criterion) => {
-            const aMatrix = Array.from({ length: aSize }, () => Array(aSize).fill(1));
-            const comps = alternativesComparisons[criterion.id] || [];
-            comps.forEach(({ id1, id2, value }) => {
-                const i = alternatives.findIndex(a => a.id === id1);
-                const j = alternatives.findIndex(a => a.id === id2);
-                if (i !== -1 && j !== -1) {
-                    const val = sliderToMatValue(value);
-                    aMatrix[i][j] = val;
-                    aMatrix[j][i] = 1 / val;
-                }
-            });
-            const priorities = calculatePriorities(aMatrix);
-            allAltPriorities.push(priorities);
-            allAltCRs.push(calculateConsistencyRatio(aMatrix, priorities));
+            if (comparisonMode === 'precision') {
+                const aMatrix = Array.from({ length: aSize }, () => Array(aSize).fill(1));
+                const comps = alternativesComparisons[criterion.id] || [];
+                comps.forEach(({ id1, id2, value }) => {
+                    const i = alternatives.findIndex(a => a.id === id1);
+                    const j = alternatives.findIndex(a => a.id === id2);
+                    if (i !== -1 && j !== -1) {
+                        const val = sliderToMatValue(value);
+                        aMatrix[i][j] = val;
+                        aMatrix[j][i] = 1 / val;
+                    }
+                });
+                const priorities = calculatePriorities(aMatrix);
+                allAltPriorities.push(priorities);
+                allAltCRs.push(calculateConsistencyRatio(aMatrix, priorities));
+            } else {
+                // Express Mode Logic: Map stars (1-5) to Saaty weights
+                // 1=1/9, 2=1/3, 3=1, 4=3, 5=9
+                const saatyMap: Record<number, number> = {
+                    0: 1,
+                    1: 1 / 9,
+                    2: 1 / 3,
+                    3: 1,
+                    4: 3,
+                    5: 9
+                };
+                const ratings = alternativeRatings[criterion.id] || {};
+                const weights = alternatives.map(a => saatyMap[ratings[a.id] || 1]);
+                const sum = weights.reduce((s, w) => s + w, 0);
+                const priorities = weights.map(w => w / sum);
+                allAltPriorities.push(priorities);
+                allAltCRs.push({ cr: 0, isConsistent: true }); // Express mode is always consistent
+            }
         });
 
         // 3. Global Scores
@@ -102,9 +129,73 @@ export default function ResultsPage() {
             allAltPriorities,
             criteriaCR,
             allAltCRs,
-            isConsistent: criteriaCR.isConsistent && allAltCRs.every(cr => cr.isConsistent)
+            isConsistent: criteriaCR.isConsistent && allAltCRs.every(cr => cr.isConsistent),
+            criteriaWeights: adjustedWeights || criteriaPriorities
         };
-    }, [criteria, alternatives, criteriaComparisons, alternativesComparisons]);
+    }, [criteria, alternatives, criteriaComparisons, alternativesComparisons, comparisonMode, alternativeRatings, adjustedWeights]);
+
+    const handleWeightChange = useCallback((index: number, newVal: number) => {
+        if (!results) return;
+
+        const currentPriorities = results.criteriaWeights;
+        const newWeights = [...currentPriorities];
+        newWeights[index] = newVal / 100;
+
+        // Re-normalize others
+        const totalOther = newWeights.reduce((sum, w, i) => i !== index ? sum + w : sum, 0);
+        const remaining = 1 - newWeights[index];
+
+        if (totalOther > 0) {
+            newWeights.forEach((w, i) => {
+                if (i !== index) {
+                    newWeights[i] = (w / totalOther) * remaining;
+                }
+            });
+        } else {
+            // distribute equally if all others were 0
+            const othersCount = newWeights.length - 1;
+            newWeights.forEach((w, i) => {
+                if (i !== index) {
+                    newWeights[i] = remaining / othersCount;
+                }
+            });
+        }
+
+        setAdjustedWeights(newWeights);
+    }, [results]);
+
+    const finalScores = useMemo(() => {
+        if (!results) return [];
+
+        return alternatives.map((alt, i) => {
+            let score = 0;
+            criteria.forEach((_, j) => {
+                score += results.criteriaWeights[j] * results.allAltPriorities[j][i];
+            });
+            return {
+                name: alt.name,
+                score: parseFloat((score * 100).toFixed(1))
+            };
+        }).sort((a, b) => b.score - a.score);
+    }, [results, alternatives, criteria]);
+
+    // ref to prevent double saving during component lifetime
+    const savedRef = useMemo(() => ({ current: false }), []);
+
+    useEffect(() => {
+        if (results && !savedRef.current) {
+            saveDecision({
+                mission,
+                winner: finalScores[0]?.name || results.finalScores[0].name,
+                score: finalScores[0]?.score || results.finalScores[0].score,
+                criteriaWeights: results.criteriaWeights.map((w, i) => ({
+                    name: criteria[i].name,
+                    weight: w
+                }))
+            });
+            savedRef.current = true;
+        }
+    }, [results, finalScores, mission, saveDecision, savedRef, criteria]);
 
     useEffect(() => {
         if (results && results.isConsistent && results.criteriaCR.cr < 0.1) {
@@ -169,7 +260,7 @@ export default function ResultsPage() {
                     </div>
                     <p className="text-secondary font-bold uppercase tracking-[0.2em] text-xs mb-2">{t.bestOption}</p>
                     <h2 className="text-5xl font-black text-foreground mb-4 tracking-tight">
-                        {results.finalScores[0].name}
+                        {finalScores[0]?.name || results.finalScores[0].name}
                     </h2>
                     <div className="flex justify-center gap-2 mb-8">
                         {[1, 2, 3].map(i => (
@@ -185,20 +276,20 @@ export default function ResultsPage() {
                         </h3>
                         <p className="text-sm text-secondary leading-relaxed">
                             {(() => {
-                                const winnerName = results.finalScores[0].name;
+                                const winnerName = finalScores[0]?.name || results.finalScores[0].name;
                                 const winnerIndex = alternatives.findIndex(a => a.name === winnerName);
 
-                                const contributions = results.criteriaPriorities.map((cp) => ({
-                                    name: cp.name,
-                                    contribution: cp.weight * results.allAltPriorities[cp.priorityIndex][winnerIndex]
+                                const contributions = results.criteriaWeights.map((w, i) => ({
+                                    name: criteria[i].name,
+                                    contribution: w * results.allAltPriorities[i][winnerIndex]
                                 })).sort((a, b) => b.contribution - a.contribution);
 
                                 const top2 = contributions.slice(0, 2);
 
                                 if (language === 'es') {
-                                    return `${winnerName} emergió como el líder claro principalmente debido a su fuerte desempeño en ${top2[0].name} (${((results.criteriaPriorities.find(c => c.name === top2[0].name)?.weight || 0) * 100).toFixed(0)}% de peso) y ${top2[1].name}.`;
+                                    return `${winnerName} emergió como el líder claro principalmente debido a su fuerte desempeño en ${top2[0].name} (${(results.criteriaWeights[criteria.findIndex(c => c.name === top2[0].name)] * 100).toFixed(0)}% de peso) y ${top2[1].name}.`;
                                 }
-                                return `${winnerName} emerged as the clear leader primarily due to its strong performance in ${top2[0].name} (${((results.criteriaPriorities.find(c => c.name === top2[0].name)?.weight || 0) * 100).toFixed(0)}% weight) and ${top2[1].name}.`;
+                                return `${winnerName} emerged as the clear leader primarily due to its strong performance in ${top2[0].name} (${(results.criteriaWeights[criteria.findIndex(c => c.name === top2[0].name)] * 100).toFixed(0)}% weight) and ${top2[1].name}.`;
                             })()}
                         </p>
                     </div>
@@ -239,7 +330,7 @@ export default function ResultsPage() {
                     </h2>
                     <div className="h-[400px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={results.finalScores} layout="vertical" margin={{ left: 40, right: 40 }}>
+                            <BarChart data={finalScores} layout="vertical" margin={{ left: 40, right: 40 }}>
                                 <XAxis type="number" hide />
                                 <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 12 }} />
                                 <Tooltip
@@ -253,7 +344,7 @@ export default function ResultsPage() {
                                     }}
                                 />
                                 <Bar dataKey="score" radius={[0, 8, 8, 0]}>
-                                    {results.finalScores.map((entry, index) => (
+                                    {finalScores.map((entry, index) => (
                                         <Cell
                                             key={`cell-${index}`}
                                             fill={index === 0 ? "#0071e3" : "#86868b"}
@@ -323,6 +414,48 @@ export default function ResultsPage() {
                                 </div>
                             ))}
                         </div>
+                    </div>
+
+                    <div className="bg-white/40 backdrop-blur-md p-6 rounded-apple border border-white/20 shadow-glass">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="font-semibold flex items-center gap-2">
+                                <Sliders className="w-5 h-5 text-primary" />
+                                {t.sensitivityAnalysis}
+                            </h3>
+                        </div>
+
+                        <ProFeatureGuard>
+                            <div className="space-y-6 mt-4">
+                                <p className="text-xs text-secondary italic mb-4">
+                                    {t.sensitivityDesc}
+                                </p>
+                                {results.criteriaWeights.map((weight, i) => (
+                                    <div key={i} className="space-y-2">
+                                        <div className="flex justify-between text-xs font-medium">
+                                            <span>{criteria[i]?.name}</span>
+                                            <span className="text-primary font-bold">{(weight * 100).toFixed(0)}%</span>
+                                        </div>
+                                        <input
+                                            type="range"
+                                            min="0"
+                                            max="100"
+                                            value={weight * 100}
+                                            onChange={(e) => handleWeightChange(i, parseInt(e.target.value))}
+                                            className="w-full h-1.5 bg-black/5 rounded-full appearance-none cursor-pointer accent-primary"
+                                        />
+                                    </div>
+                                ))}
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setAdjustedWeights(null)}
+                                    className="w-full text-xs h-8"
+                                >
+                                    <RefreshCcw className="w-3 h-3 mr-2" />
+                                    Reset Weights
+                                </Button>
+                            </div>
+                        </ProFeatureGuard>
                     </div>
                 </div>
             </div>
