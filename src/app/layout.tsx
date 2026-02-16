@@ -16,10 +16,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.className} min-h-screen bg-background text-foreground`}>
-        <main className="max-w-4xl mx-auto px-6 py-12 lg:py-24">
+      <body className={`${inter.className} min-h-screen bg-background text-foreground flex flex-col`}>
+        <main className="flex-1 max-w-4xl mx-auto px-6 py-12 lg:py-24 w-full">
           {children}
         </main>
+        <footer className="w-full border-t border-border/50 py-8 text-center">
+          <p className="text-secondary text-xs font-medium tracking-wide">
+            DecisionsMaker © 2026 by Aldo Salazar. Built with the Science of AHP.
+          </p>
+        </footer>
       </body>
     </html>
   );

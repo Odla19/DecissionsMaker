@@ -10,7 +10,19 @@ import { motion } from "framer-motion";
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell
 } from 'recharts';
-import { AlertTriangle, CheckCircle, RefreshCcw, Share2 } from "lucide-react";
+import { AlertTriangle, CheckCircle, RefreshCcw, Share2, Trophy, Star, Target, Zap, Shield, Wallet, Clock, Heart, Award, Info } from "lucide-react";
+
+const getCriterionIcon = (name: string) => {
+    const n = name.toLowerCase();
+    if (n.includes('cost') || n.includes('price') || n.includes('money')) return <Wallet className="w-4 h-4" />;
+    if (n.includes('quality') || n.includes('performance')) return <Star className="w-4 h-4" />;
+    if (n.includes('speed') || n.includes('time') || n.includes('fast')) return <Zap className="w-4 h-4" />;
+    if (n.includes('safe') || n.includes('security')) return <Shield className="w-4 h-4" />;
+    if (n.includes('goal') || n.includes('objective')) return <Target className="w-4 h-4" />;
+    if (n.includes('health') || n.includes('love')) return <Heart className="w-4 h-4" />;
+    if (n.includes('duration') || n.includes('clock')) return <Clock className="w-4 h-4" />;
+    return <Award className="w-4 h-4" />;
+};
 
 export default function ResultsPage() {
     const {
@@ -77,7 +89,13 @@ export default function ResultsPage() {
 
         return {
             finalScores,
-            criteriaPriorities: criteria.map((c, i) => ({ name: c.name, weight: criteriaPriorities[i] })),
+            criteriaPriorities: criteria.map((c, i) => ({
+                id: c.id,
+                name: c.name,
+                weight: criteriaPriorities[i],
+                priorityIndex: i
+            })),
+            allAltPriorities,
             criteriaCR,
             allAltCRs,
             isConsistent: criteriaCR.isConsistent && allAltCRs.every(cr => cr.isConsistent)
@@ -95,22 +113,81 @@ export default function ResultsPage() {
                 <p className="text-secondary text-lg">Mission: <span className="text-foreground italic">"{mission}"</span></p>
             </header>
 
+            {/* Winner Spotlight Card */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="gold-glow mx-auto w-full max-w-2xl bg-white/60 backdrop-blur-xl rounded-[2rem] border border-white/40 p-10 shadow-glass text-center relative overflow-hidden"
+            >
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-yellow-400/20 blur-[60px] rounded-full" />
+
+                <div className="relative z-10">
+                    <div className="inline-flex items-center justify-center p-4 bg-yellow-400/10 rounded-2xl mb-6">
+                        <Trophy className="w-12 h-12 text-yellow-500 drop-shadow-sm" />
+                    </div>
+                    <p className="text-secondary font-bold uppercase tracking-[0.2em] text-xs mb-2">The Optimal Choice</p>
+                    <h2 className="text-5xl font-black text-foreground mb-4 tracking-tight">
+                        {results.finalScores[0].name}
+                    </h2>
+                    <div className="flex justify-center gap-2 mb-8">
+                        {[1, 2, 3].map(i => (
+                            <Star key={i} className="w-5 h-5 text-yellow-500 fill-yellow-500" />
+                        ))}
+                    </div>
+
+                    {/* Reasoning Section Inside Winner Card */}
+                    <div className="max-w-md mx-auto p-6 bg-black/5 rounded-3xl border border-black/5 backdrop-blur-md">
+                        <h3 className="text-sm font-bold text-foreground flex items-center justify-center gap-2 mb-3">
+                            <Info className="w-4 h-4 text-primary" />
+                            Why this option won:
+                        </h3>
+                        <p className="text-sm text-secondary leading-relaxed">
+                            {(() => {
+                                const winnerName = results.finalScores[0].name;
+                                const winnerIndex = alternatives.findIndex(a => a.name === winnerName);
+
+                                const contributions = results.criteriaPriorities.map((cp) => ({
+                                    name: cp.name,
+                                    contribution: cp.weight * results.allAltPriorities[cp.priorityIndex][winnerIndex]
+                                })).sort((a, b) => b.contribution - a.contribution);
+
+                                const top2 = contributions.slice(0, 2);
+                                return `${winnerName} emerged as the clear leader primarily due to its strong performance in ${top2[0].name} (${((results.criteriaPriorities.find(c => c.name === top2[0].name)?.weight || 0) * 100).toFixed(0)}% weight) and ${top2[1].name}.`;
+                            })()}
+                        </p>
+                    </div>
+                </div>
+            </motion.div>
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
                 {/* Main Chart */}
-                <div className="lg:col-span-2 bg-white rounded-apple border border-border/50 p-8 apple-shadow">
-                    <h2 className="text-xl font-semibold mb-8">Best Options Ranked</h2>
+                <div className="lg:col-span-2 bg-white/40 backdrop-blur-md rounded-[2rem] border border-white/20 p-8 shadow-glass relative overflow-hidden">
+                    <h2 className="text-xl font-semibold mb-8 flex items-center gap-2">
+                        <Award className="w-5 h-5 text-primary" />
+                        Complete Ranking
+                    </h2>
                     <div className="h-[400px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={results.finalScores} layout="vertical" margin={{ left: 40, right: 40 }}>
                                 <XAxis type="number" hide />
                                 <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 12 }} />
                                 <Tooltip
-                                    cursor={{ fill: 'rgba(0,0,0,0.02)' }}
-                                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
+                                    cursor={{ fill: 'rgba(255,255,255,0.1)' }}
+                                    contentStyle={{
+                                        borderRadius: '16px',
+                                        border: '1px solid rgba(255,255,255,0.1)',
+                                        backdropFilter: 'blur(8px)',
+                                        background: 'rgba(255,255,255,0.8)',
+                                        boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'
+                                    }}
                                 />
-                                <Bar dataKey="score" radius={[0, 4, 4, 0]}>
+                                <Bar dataKey="score" radius={[0, 8, 8, 0]}>
                                     {results.finalScores.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={index === 0 ? "#0071e3" : "#86868b"} />
+                                        <Cell
+                                            key={`cell-${index}`}
+                                            fill={index === 0 ? "#0071e3" : "#86868b"}
+                                            className={index === 0 ? "drop-shadow-[0_0_12px_rgba(255,215,0,0.4)]" : ""}
+                                        />
                                     ))}
                                 </Bar>
                             </BarChart>
@@ -120,7 +197,7 @@ export default function ResultsPage() {
 
                 {/* Advisor & Stats */}
                 <div className="space-y-8">
-                    <div className={`p-6 rounded-apple border ${results.isConsistent ? 'bg-green-50 border-green-200' : 'bg-orange-50 border-orange-200'}`}>
+                    <div className={`p-6 rounded-apple border backdrop-blur-sm ${results.isConsistent ? 'bg-green-50/50 border-green-200' : 'bg-orange-50/50 border-orange-200'}`}>
                         <div className="flex items-center gap-3 mb-4">
                             {results.isConsistent ? (
                                 <CheckCircle className="text-green-600 w-6 h-6" />
@@ -134,23 +211,44 @@ export default function ResultsPage() {
                                 ? "Your judgments are highly consistent. The results are mathematically reliable."
                                 : "Some of your pairwise comparisons are inconsistent. You might want to review them for better accuracy."}
                         </p>
-                        {!results.isConsistent && (
-                            <div className="text-xs space-y-1">
-                                <p>Criteria CR: {results.criteriaCR.cr.toFixed(3)}</p>
-                                {results.allAltCRs.map((cr, i) => (
-                                    <p key={i}>{criteria[i].name} CR: {cr.cr.toFixed(3)}</p>
-                                ))}
+
+                        <div className="text-[10px] space-y-1 pt-4 border-t border-black/5">
+                            <p className="font-bold uppercase tracking-widest text-secondary/60 mb-2">Detailed Consistency Ratios</p>
+                            <div className="flex justify-between items-center">
+                                <span>Overall Criteria</span>
+                                <span className={results.criteriaCR.cr < 0.1 ? "text-green-600 font-medium" : "text-orange-600 font-medium"}>
+                                    {results.criteriaCR.cr.toFixed(3)}
+                                </span>
                             </div>
-                        )}
+                            {results.allAltCRs.map((cr, i) => (
+                                <div key={i} className="flex justify-between items-center">
+                                    <span className="truncate max-w-[120px]">{criteria[i]?.name || 'Criterion'} Comparisons</span>
+                                    <span className={cr.cr < 0.1 ? "text-green-600 font-medium" : "text-orange-600 font-medium"}>
+                                        {cr.cr.toFixed(3)}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
                     </div>
 
-                    <div className="bg-accent/20 p-6 rounded-apple border border-border/50">
+                    <div className="bg-white/40 backdrop-blur-md p-6 rounded-apple border border-white/20 shadow-glass">
                         <h3 className="font-semibold mb-4">Criteria Weighting</h3>
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                             {results.criteriaPriorities.map((c, i) => (
-                                <div key={i} className="flex justify-between items-center text-sm">
-                                    <span>{c.name}</span>
-                                    <span className="font-medium">{(c.weight * 100).toFixed(0)}%</span>
+                                <div key={i} className="group flex flex-col gap-1">
+                                    <div className="flex justify-between items-center text-sm">
+                                        <div className="flex items-center gap-2">
+                                            {getCriterionIcon(c.name)}
+                                            <span className="font-medium">{c.name}</span>
+                                        </div>
+                                        <span className="font-bold">{(c.weight * 100).toFixed(0)}%</span>
+                                    </div>
+                                    <div className="w-full h-1 bg-black/5 rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-primary/60 group-hover:bg-primary transition-all duration-500"
+                                            style={{ width: `${c.weight * 100}%` }}
+                                        />
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -168,6 +266,6 @@ export default function ResultsPage() {
                     Export Results
                 </Button>
             </div>
-        </div>
+        </div >
     );
 }

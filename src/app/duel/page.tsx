@@ -107,12 +107,30 @@ export default function DuelPage() {
                     </div>
                     <span className="text-secondary text-sm">Duel {currentIndex + 1} of {tasks.length}</span>
                 </div>
-                <div className="w-full h-1 bg-accent rounded-full overflow-hidden">
+                <div className="w-full h-2 bg-accent rounded-full overflow-hidden shadow-inner">
                     <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${progress}%` }}
-                        className="h-full bg-primary"
+                        transition={{ type: "spring", stiffness: 50, damping: 20 }}
+                        className="h-full bg-gradient-to-r from-primary/80 to-primary shadow-[0_0_10px_rgba(0,113,227,0.3)]"
                     />
+                </div>
+                <div className="mt-2 text-center">
+                    <AnimatePresence mode="wait">
+                        <motion.p
+                            key={currentIndex}
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 1.1 }}
+                            className="text-xs font-medium text-primary/60 italic"
+                        >
+                            {progress < 25 && "Getting started! Let's define your values..."}
+                            {progress >= 25 && progress < 50 && "You're doing great! Diving deeper..."}
+                            {progress >= 50 && progress < 75 && "Halfway there! Keep those judgments coming..."}
+                            {progress >= 75 && progress < 100 && "Almost there! Analyzing your preferences..."}
+                            {progress >= 100 && "Perfect! Ready to see your results?"}
+                        </motion.p>
+                    </AnimatePresence>
                 </div>
             </div>
 
