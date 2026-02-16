@@ -1,10 +1,10 @@
-# DecisionsMaker: Science-Backed Decisions with Apple-Level Simplicity
+# DecisionsMaker / SOPESA: Science-Backed Decisions with Apple-Level Simplicity
 
 [![Framework](https://img.shields.io/badge/Framework-Next.js-black?style=flat-square&logo=next.js)](https://nextjs.org/)
 [![Style](https://img.shields.io/badge/Style-Tailwind_CSS-38B2AC?style=flat-square&logo=tailwind-css)](https://tailwindcss.com/)
 [![License](https://img.shields.io/badge/License-AGPL--3.0-blue?style=flat-square)](https://opensource.org/licenses/AGPL-3.0)
 
-**DecisionsMaker** is a premium decision-support application designed to bring clarity to complex choices. By combining the rigorous mathematics of the **Analytic Hierarchy Process (AHP)** with a minimalist, "Apple-level" user experience, it transforms gut feelings into data-driven confidence.
+**DecisionsMaker** (English) and **SOPESA** (Español) is a premium decision-support application designed to bring clarity to complex choices. By combining the rigorous mathematics of the **Analytic Hierarchy Process (AHP)** with a minimalist, "Apple-level" user experience, it transforms gut feelings into data-driven confidence.
 
 ---
 
@@ -23,11 +23,14 @@ By forcing a direct comparison between two options at a time, DecisionsMaker rem
 
 ## ✨ Features
 
+-   **Global Launch Ready (i18n)**: Full support for English (**DecisionsMaker**) and Spanish (**SOPESA**).
 -   **Glassmorphism UI**: A stunning, modern interface built with backdrop blurs and curated typography.
 -   **Consistency Ratio (CR) Monitoring**: Real-time feedback on your judgment consistency. If your choices are contradictory, the science-backed Advisor will let you know.
+-   **Confetti Wins**: Celebrate logically sound decisions (CR < 0.1) with a visual bang!
+-   **Social Sharing**: Share your scientific results on WhatsApp and Telegram with localized messages.
+-   **Haptic Feedback**: Subtle scale animations on all interactive elements for a premium feel.
 -   **Local Persistence**: Your decision missions are stored securely in your browser using local storage—no account required.
 -   **Dynamic Reasoning**: Get a written explanation of *why* an alternative won, based on the weights you assigned to each criterion.
--   **Print-Ready Results**: Export your results and ranking for professional documentation or sharing.
 
 ---
 
@@ -37,6 +40,7 @@ By forcing a direct comparison between two options at a time, DecisionsMaker rem
 -   **Styling**: [Tailwind CSS](https://tailwindcss.com/)
 -   **State Management**: [Zustand](https://github.com/pmndrs/zustand) (with Persistence)
 -   **Animation**: [Framer Motion](https://www.framer.com/motion/)
+-   **Visual Effects**: [Canvas-Confetti](https://www.npmjs.com/package/canvas-confetti)
 -   **Icons**: [Lucide React](https://lucide.dev/)
 -   **Mathematics**: Custom AHP Engine (Eigenvector Method)
 

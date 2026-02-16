@@ -6,6 +6,8 @@ function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
 }
 
+import { motion } from "framer-motion";
+
 export interface ButtonProps
     extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     variant?: "primary" | "secondary" | "outline" | "ghost";
@@ -15,7 +17,7 @@ export interface ButtonProps
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ({ className, variant = "primary", size = "md", ...props }, ref) => {
         const variants = {
-            primary: "bg-primary text-white hover:opacity-90 shadow-sm",
+            primary: "bg-primary text-white shadow-sm",
             secondary: "bg-accent text-foreground hover:bg-border/20",
             outline: "border border-border bg-transparent hover:bg-accent text-foreground",
             ghost: "hover:bg-accent text-foreground",
@@ -28,15 +30,17 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         };
 
         return (
-            <button
-                ref={ref}
+            <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                ref={ref as any}
                 className={cn(
-                    "inline-flex items-center justify-center rounded-apple font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98]",
+                    "inline-flex items-center justify-center rounded-apple font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50 disabled:pointer-events-none",
                     variants[variant],
                     sizes[size],
                     className
                 )}
-                {...props}
+                {...(props as any)}
             />
         );
     }

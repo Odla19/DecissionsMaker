@@ -6,10 +6,11 @@ import { translations } from "@/lib/ahp/translations";
 import { Button } from "@/components/ui/base";
 import StepIndicator from "@/components/ahp/StepIndicator";
 import { useRouter } from "next/navigation";
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
+import confetti from "canvas-confetti";
 import {
-    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell
+    BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell
 } from 'recharts';
 import { AlertTriangle, CheckCircle, RefreshCcw, Share2, Trophy, Star, Target, Zap, Shield, Wallet, Clock, Heart, Award, Info, Send, MessageCircle } from "lucide-react";
 
@@ -105,18 +106,43 @@ export default function ResultsPage() {
         };
     }, [criteria, alternatives, criteriaComparisons, alternativesComparisons]);
 
+    useEffect(() => {
+        if (results && results.isConsistent && results.criteriaCR.cr < 0.1) {
+            const duration = 3 * 1000;
+            const animationEnd = Date.now() + duration;
+            const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+            const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
+
+            const interval: any = setInterval(function () {
+                const timeLeft = animationEnd - Date.now();
+
+                if (timeLeft <= 0) {
+                    return clearInterval(interval);
+                }
+
+                const particleCount = 50 * (timeLeft / duration);
+                confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
+                confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
+            }, 250);
+        }
+    }, [results]);
+
     if (!results) return null;
 
     const shareUrl = "https://decissions-maker.vercel.app";
-    const shareTextEn = t.socialMessage.replace('{goal}', mission).replace('{winner}', results.finalScores[0].name).replace('{score}', results.finalScores[0].score.toString());
+    const shareText = t.socialMessage
+        .replace('{goal}', mission)
+        .replace('{winner}', results.finalScores[0].name)
+        .replace('{score}', results.finalScores[0].score.toString());
 
     const shareWhatsApp = () => {
-        const url = `https://wa.me/?text=${encodeURIComponent(shareTextEn + " " + shareUrl)}`;
+        const url = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
         window.open(url, '_blank');
     };
 
     const shareTelegram = () => {
-        const url = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTextEn)}`;
+        const url = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
         window.open(url, '_blank');
     };
 
@@ -179,7 +205,7 @@ export default function ResultsPage() {
 
                     {/* Social Share Section */}
                     <div className="mt-8 pt-8 border-t border-black/5">
-                        <p className="text-xs font-bold uppercase tracking-widest text-secondary mb-4">{t.share}</p>
+                        <p className="text-xs font-bold uppercase tracking-widest text-secondary mb-4">{t.shareDecision}</p>
                         <div className="flex justify-center gap-4">
                             <motion.button
                                 whileHover={{ scale: 1.05 }}

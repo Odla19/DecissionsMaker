@@ -15,7 +15,7 @@ export const translations = {
         consistency: "Consistency Advisor",
         criteriaWeight: "Criteria Weighting",
         ranking: "Complete Ranking",
-        socialMessage: "I've made a scientific decision! My top choice for '{goal}' is {winner} with {score}% affinity. Try it yourself on DecisionsMaker!",
+        socialMessage: "I just made a science-backed decision! 🧠 My top choice for '{goal}' is {winner} with {score}% affinity. Try it yourself on DecisionsMaker: https://decissions-maker.vercel.app",
         encouragement: [
             "Getting started! Let's define your values...",
             "You're doing great! Diving deeper...",
@@ -49,9 +49,11 @@ export const translations = {
         beginDuels: "Begin Pairwise Duels",
         backMission: "Back to Mission",
         setupWarning: "Add at least 2 criteria and 2 alternatives to proceed.",
+        footer: "DecisionsMaker © 2026 by Aldo Salazar. Built with the Science of AHP.",
+        shareDecision: "Share Decision"
     },
     es: {
-        title: "DecisorMaestro",
+        title: "SOPESA",
         mission: "Misión",
         setup: "Configuración",
         duel: "Duelo",
@@ -66,7 +68,7 @@ export const translations = {
         consistency: "Asesor de Consistencia",
         criteriaWeight: "Peso de los Criterios",
         ranking: "Clasificación Completa",
-        socialMessage: "¡He tomado una decisión científica! Mi mejor opción para '{goal}' es {winner} con un {score}% de afinidad. ¡Pruébalo tú también en DecisionsMaker!",
+        socialMessage: "¡He tomado una decisión científica! 🧠 Mi mejor opción para '{goal}' es {winner} con un {score}% de afinidad. Sopesa tus opciones tú también en: https://decissions-maker.vercel.app",
         encouragement: [
             "¡Empezando! Definamos tus valores...",
             "¡Vas muy bien! Profundizando...",
@@ -100,5 +102,7 @@ export const translations = {
         beginDuels: "Comenzar Duelos por Pares",
         backMission: "Volver a la Misión",
         setupWarning: "Añade al menos 2 criterios y 2 alternativas para continuar.",
+        footer: "SOPESA © 2026 por Aldo Salazar. Construido con la Ciencia de AHP.",
+        shareDecision: "Compartir Decisión"
     }
 };
